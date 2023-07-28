@@ -7,6 +7,7 @@ use App\Helper\Reply;
 use App\Http\Requests\Notice\StoreNotice;
 use App\Models\Notice;
 use App\Models\Team;
+use App\Models\ClientDelay;
 use Illuminate\Http\Request;
 
 class NoticeController extends AccountBaseController
@@ -28,8 +29,15 @@ class NoticeController extends AccountBaseController
         $viewPermission = user()->permission('view_notice');
         abort_403(!in_array($viewPermission, ['all', 'added', 'owned', 'both']));
 
-        return $dataTable->render('notices.index', $this->data);
+        $delayedProjects = ClientDelay::select('client_delays.*', 'clients.name as client_name', 'managers.name as manager_name', 'projects.project_name')
+            ->join('projects', 'client_delays.project_id', '=', 'projects.id')
+            ->join('users as clients', 'projects.client_id', '=', 'clients.id')
+            ->join('users as managers', 'projects.pm_id', '=', 'managers.id')
+            ->get();
+        //show project manager extra days data
+        $this->data['delayedProjects'] = $delayedProjects;
 
+        return $dataTable->render('notices.index', $this->data);
     }
 
     /**
@@ -72,7 +80,6 @@ class NoticeController extends AccountBaseController
         $notice->save();
 
         return Reply::successWithData(__('messages.noticeAdded'), ['redirectUrl' => route('notices.index')]);
-
     }
 
     /**
@@ -85,8 +92,7 @@ class NoticeController extends AccountBaseController
     {
         $this->notice = Notice::with('member', 'member.user')->findOrFail($id);
         $this->viewPermission = user()->permission('view_notice');
-        abort_403(!(
-            $this->viewPermission == 'all'
+        abort_403(!($this->viewPermission == 'all'
             || ($this->viewPermission == 'added' && $this->notice->added_by == user()->id)
             || ($this->viewPermission == 'owned' && in_array($this->notice->to, user_roles()))
             || ($this->viewPermission == 'both' && (in_array($this->notice->to, user_roles()) || $this->notice->added_by == user()->id))
@@ -119,7 +125,6 @@ class NoticeController extends AccountBaseController
 
         $this->view = 'notices.ajax.show';
         return view('notices.create', $this->data);
-
     }
 
     /**
@@ -133,8 +138,7 @@ class NoticeController extends AccountBaseController
         $this->notice = Notice::findOrFail($id);
         $this->editPermission = user()->permission('edit_notice');
 
-        abort_403(!(
-            $this->editPermission == 'all'
+        abort_403(!($this->editPermission == 'all'
             || ($this->editPermission == 'added' && $this->notice->added_by == user()->id)
             || ($this->editPermission == 'owned' && in_array($this->notice->to, user_roles()))
             || ($this->editPermission == 'both' && (in_array($this->notice->to, user_roles()) || $this->notice->added_by == user()->id))
@@ -151,7 +155,6 @@ class NoticeController extends AccountBaseController
         $this->view = 'notices.ajax.edit';
 
         return view('notices.create', $this->data);
-
     }
 
     /**
@@ -164,8 +167,7 @@ class NoticeController extends AccountBaseController
     {
         $notice = Notice::findOrFail($id);
         $this->editPermission = user()->permission('edit_notice');
-        abort_403(!(
-            $this->editPermission == 'all'
+        abort_403(!($this->editPermission == 'all'
             || ($this->editPermission == 'added' && $this->notice->added_by == user()->id)
             || ($this->editPermission == 'owned' && in_array($this->notice->to, user_roles()))
             || ($this->editPermission == 'both' && (in_array($this->notice->to, user_roles()) || $this->notice->added_by == user()->id))
@@ -190,8 +192,7 @@ class NoticeController extends AccountBaseController
     {
         $notice = Notice::findOrFail($id);
         $this->deletePermission = user()->permission('delete_notice');
-        abort_403(!(
-            $this->deletePermission == 'all'
+        abort_403(!($this->deletePermission == 'all'
             || ($this->deletePermission == 'added' && $notice->added_by == user()->id)
             || ($this->deletePermission == 'owned' && in_array($notice->to, user_roles()))
             || ($this->deletePermission == 'both' && (in_array($notice->to, user_roles()) || $notice->added_by == user()->id))
@@ -199,16 +200,15 @@ class NoticeController extends AccountBaseController
 
         Notice::destroy($id);
         return Reply::successWithData(__('messages.noticeDeleted'), ['redirectUrl' => route('notices.index')]);
-
     }
 
     public function applyQuickAction(Request $request)
     {
         switch ($request->action_type) {
-        case 'delete':
-            $this->deleteRecords($request);
+            case 'delete':
+                $this->deleteRecords($request);
                 return Reply::success(__('messages.deleteSuccess'));
-        default:
+            default:
                 return Reply::error(__('messages.selectAction'));
         }
     }
@@ -219,5 +219,4 @@ class NoticeController extends AccountBaseController
 
         Notice::whereIn('id', explode(',', $request->row_ids))->forceDelete();
     }
-
 }

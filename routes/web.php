@@ -323,6 +323,8 @@ Route::group(['middleware' => 'auth', 'prefix' => 'account'], function () {
     Route::get('dashboard/private_calendar', [DashboardController::class, 'privateCalendar'])->name('dashboard.private_calendar');
     // Route::resource('points/', PointsController::class)->only // enan 
     Route::post('dashboard/filter', [DashboardController::class, 'filter'])->name('dashboard.filter');
+    Route::post('dashboard/delayRequestForm', [DashboardController::class, 'delayRequestForm'])->name('dashboard.delayRequestForm');
+    Route::post('dashboard/projectExtendApproval', [DashboardController::class, 'projectExtendApproval'])->name('dashboard.projectExtendApproval');
     Route::get('/menu/filter-options/{mode}/{value?}', [PointsController::class, 'get_filter_options']);
     Route::get('/menu/filter/get-employee', [PointsController::class, 'get_employe_by_filter_options']);
     Route::post('/point-table-data', [PointsController::class, 'get_point_table_data']);

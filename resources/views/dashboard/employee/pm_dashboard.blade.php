@@ -2770,237 +2770,457 @@
 
 </div>
 <div> @endsection--}}
-    <div>
-        <form action="{{ route('dashboard.filter') }}"
-              method="POST">
-            {{ csrf_field() }}
-            <label for="start_date">ID:</label>
-            <input type="number"
-                   name="pmid"
-                   id="start_date"
-                   required>
-            <label for="start_date">Start Date:</label>
-            <input type="date"
-                   name="start_date"
-                   id="start_date"
-                   required>
 
-            <label for="end_date">End Date:</label>
-            <input type="date"
-                   name="end_date"
-                   id="end_date"
-                   required>
+    <!DOCTYPE html>
 
-            <button type="submit"
-                    class="btn btn-primary">Submit</button>
-        </form>
-    </div>
+    <head>
+        <title>Project Manager</title>
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet"
+              href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    </head>
 
-    <div>
+    <body style="margin-left: 5%">
+        <div class="form-group">
+            <form action="{{ route('dashboard.filter') }}"
+                  method="POST">
+                {{ csrf_field() }}
+                <label for="projectmanager">NAME:</label>
+                <select name="pmid"
+                        id="dropdown1"
+                        required>
+                    <option value="209">Diner M Islam</option>
+                    <option value="210">Farhan Rahman</option>
+                    <option value="245">Mohammad Fazle Rabbi</option>
+                </select>
+                <label for="start_date">Start Date:</label>
+                <input type="date"
+                       name="start_date"
+                       id="start_date"
+                       required>
 
-        {{-- <table class="table">
-            <thead>
-                <tr>
-                    <th>Client Name</th>
-                    <th>Project Name</th>
-                    <th>Project Budget</th>
-                    <th>Milestone Name</th>
-                    <th>Milestone Value</th>
-                    <th>Start Milestone Date</th>
-                    <th>Milestone status</th>
-                    <th>Mileston Complete Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($completedMilestonesGet as $milestone)
-                <tr>
-                    <td>{{ $milestone->name }}</td>
-                    <td>{{ $milestone->project_name }}</td>
-                    <td>{{ $milestone->project_budget }}</td>
-                    <td>{{ $milestone->milestone_title }}</td>
-                    <td>{{ $milestone->actual_cost }}</td>
-                    <td>{{ $milestone->created_at}}</td>
-                    <td>{{ $milestone->status }}</td>
-                    <td>{{ $milestone->paid_on }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                <label for="end_date">End Date:</label>
+                <input type="date"
+                       name="end_date"
+                       id="end_date"
+                       required>
 
-        @if (isset($completedMilestonesCount))
-        <p>Date:{{ $startDate }} to {{ $assignEndDate }} </p>
-        <p>{{ $completedMilestonesCount }} milestones completed by {{ Auth::user()->name }}</p>
-        <p>{{ $totalAssignMilestones }} milestones assigned by {{ Auth::user()->name }}</p>
-        <p>Percentage: {{ number_format($milestoneCompletionRateCountwise, 2) }}% -Countwise</p>
-        <p>{{number_format($completedMilestonesValueCount,2)}} Dollar milestones completed by {{ Auth::user()->name }}</p>
-        <p>{{number_format( $totalAssignMilestonesValue,2) }} Dollar milestones assigned by {{ Auth::user()->name }}</p>
-        <p>Percentage: {{ number_format($milestoneCompletionRateValuewise, 2) }}% -Valuewise</p>
-        @endif --}}
+                <button type="submit"
+                        class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+
+        <div>
 
 
-        @if (isset($totalAssignMilestonesCost))
-        <p>Project Manager Name: {{ $username }} </p>
-        <p>Date:{{ $startDate }} to {{ $assignEndDate }} </p>
 
-        <h3>Milestone Completion Rate</h3>
-        <p>{{ $totalAssignMilestonesCost }} Dollar milestones assigned </p>
-        <p>{{ $totalCompleteMilestonesCost }} Dollar milestones completed </p>
-        <p>Percentage by Cost: {{ number_format($milestoneCompletionRatebyCost, 2) }}% </p>
-        <p>{{ $totalAssignMilestonesRow }} milestones assigned </p>
-        <p>{{ $totalCompleteMilestonesRow }} milestones completed </p>
-        <p>Percentage by Count: {{ number_format($milestoneCompletionRatebyRow, 2) }}% </p>
+            @if (isset($totalAssignMilestonesCost))
+            <p>Project Manager Name: {{ $username }} </p>
+            <p>Date:{{ $startDate }} to {{ $endDate }} </p>
 
-        <h3>Milestone Completion Rate(Running)</h3>
-        <p>{{ $RunningtotalAssignMilestonesCost }} Dollar milestones assigned </p>
-        <p>{{ $RunningtotalCompleteMilestonesCost }} Dollar milestones completed </p>
-        <p>Percentage by Cost: {{ number_format($RunningmilestoneCompletionRatebyCost, 2) }}% </p>
-        <p>{{ $RunningtotalAssignMilestonesRow }} milestones assigned </p>
-        <p>{{ $RunningtotalCompleteMilestonesRow }} milestones completed </p>
-        <p>Percentage by Count: {{ number_format($RunningmilestoneCompletionRatebyRow, 2) }}% </p>
+            <h3>Total Delayed Projects(Running Cycle)</h3>
+            <p>{{ $delayedProjectsCount}}</p>
 
+            <h3>Total Completed Delayed Projects (Running Cycle)</h3>
+            <p>{{ $completeDelayedProjectsCount}}</p>
 
-        <h3>Task Completion Rate</h3>
-        <p>{{ $totalAssignTasksRow }} Tasks assigned </p>
-        <p>{{ $totalCompleteTasksRow }} Tasks completed </p>
-        <p>Percentage: {{ number_format($taskCompletionRate, 2) }}% </p>
+            <h3>Total Assigned projects number</h3>
+            <p>{{ $totalRunningAcceptedProjectsRow + $totalRunningRejectedProjectsRow }}</p>
 
-        <h3>Task Completion Rate (Running)</h3>
-        <p>{{ $RunningtotalAssignTasksRow }} Tasks assigned </p>
-        <p>{{ $RunningtotalCompleteTasksRow }} Tasks completed </p>
-        <p>Percentage: {{ number_format($RunningtaskCompletionRate, 2) }}% </p>
+            <h3>Total Accepted projects number</h3>
+            <p>{{ $totalRunningAcceptedProjectsRow}}</p>
 
-        <h3>Project Completion Rate(Without QC and Completion Form)</h3>
-        <p>{{ $totalAssignProjectsSum }} Dollar assigned </p>
-        <p>{{ $ProjectCompletionWithoutQCCountbyCost }} Dollar completed </p>
-        <p>Percentage: {{ number_format($ProjectCompletionRatebyCostWithoutQC, 2) }}% </p>
+            <h3>Total Rejected projects number</h3>
+            <p>{{ $totalRunningRejectedProjectsRow}}</p>
 
-        <p>{{ $totalAssignProjectsRow }} Projects assigned </p>
-        <p>{{ $ProjectCompletionWithoutQCCountbyRow }} Projects completed </p>
-        <p>Percentage: {{ number_format($projectsCompletionRatebyRowWithoutQC, 2) }}% </p>
+            <h3>Total Assigned Projects value</h3>
+            <p>{{ number_format($totalRunningAcceptedProjectsSum + $totalRunningRejectedProjectsSum,2)}}</p>
 
-        <h3>Average Project Completion Time</h3>
-        <p>{{ number_format($averageProjectCompletionTime,2) }} Days</p>
+            <h3>Total Accepted Projects value</h3>
+            <p>{{ number_format($totalRunningAcceptedProjectsSum,2)}}</p>
 
-        <h3>Project Completion Rate</h3>
-        <p>{{ $totalAssignProjectsSum }} Dollar assigned </p>
-        <p>{{ $totalCompleteProjectsSum }} Dollar completed </p>
-        <p>Percentage: {{ number_format($ProjectCompletionRatebyCost, 2) }}% </p>
-        <p>{{ $totalAssignProjectsRow }} Projects assigned </p>
-        <p>{{ $totalCompleteProjectsRow }} Projects completed </p>
-        <p>Percentage: {{ number_format($projectsCompletionRatebyRow, 2) }}% </p>
+            <h3>Total Rejected Projects value</h3>
+            <p>{{ number_format($totalRunningRejectedProjectsSum,2)}}</p>
 
-        <h3>Project Completion Rate(Running Batch)</h3>
-        <p>{{ $totalRunningAssignProjectsSum }} Dollar assigned </p>
-        <p>{{ $totalRunningCompleteProjectsSum }} Dollar completed </p>
-        <p>Percentage: {{ number_format($RunningProjectCompletionRatebyCost, 2) }}% </p>
-        <p>{{ $totalRunningAssignProjectsRow }} Projects assigned </p>
-        <p>{{ $totalRunningCompleteProjectsRow }} Projects completed </p>
-        <p>Percentage: {{ number_format($RunningProjectsCompletionRatebyRow, 2) }}% </p>
-        @endif
+            <h3>Released amount for Cycle</h3>
+            <p>{{ $RunningtotalAssignMilestonesCost}}</p>
+
+            <h3>Total released amount</h3>
+            <p>{{ $totalAssignMilestonesCost}}</p>
 
 
-        <table>
-            <thead>
-                <tr>
-                    <th>SL NO</th>
-                    <th>Project Manager ID</th>
-                    <th>Client ID</th>
-                    <th>Client Name</th>
-                    <th>Project ID</th>
-                    <th>Project Name</th>
-                    <th>Project Budget</th>
-                    <th>Milestone ID</th>
-                    <th>Milestone Title</th>
-                    <th>Milestone Cost</th>
-                    <th>Milestone Start</th>
+            <h3>Project Completion Rate</h3>
+            <p>{{ $totalAssignProjectsSum }} Dollar assigned </p>
+            <p>{{ $totalCompleteProjectsSum }} Dollar completed </p>
+            <p>Percentage: {{ number_format($ProjectCompletionRatebyCost, 2) }}% </p>
+            <p>{{ $totalAssignProjectsRow }} Projects assigned </p>
+            <p>{{ $totalCompleteProjectsRow }} Projects completed </p>
+            <p>Percentage: {{ number_format($projectsCompletionRatebyRow, 2) }}% </p>
 
-                </tr>
-            </thead>
-            <tbody>
-                @if(isset($dataview))
-                @foreach ($dataview as $key => $row)
-                <tr>
-                    <td>{{$key+1}}</td>
-                    <td>{{ $row->pm_id }}</td>
-                    <td>{{ $row->client_id }}</td>
-                    <td>{{ $row->name }}</td>
-                    <td>{{ $row->id }}</td>
-                    <td>{{ $row->project_name }}</td>
-                    <td>{{ $row->project_budget }}</td>
-                    <td>{{ $row->milestone_id }}</td>
-                    <td>{{ $row->milestone_title }}</td>
-                    <td>{{ $row->cost }}</td>
-                    <td>{{ $row->created_at }}</td>
+            <h3>Average Project Completion Time</h3>
+            <p>{{ number_format($averageProjectCompletionTime,2) }} Days</p>
 
-                </tr>
-                @endforeach
-                @endif
-            </tbody>
-        </table>
-        <br><br>
+            <h3>Milestone Completion Rate</h3>
+            <p>{{ $totalAssignMilestonesCost }} Dollar milestones assigned </p>
+            <p>{{ $totalCompleteMilestonesCost }} Dollar milestones completed </p>
+            <p>Percentage by Cost: {{ number_format($milestoneCompletionRatebyCost, 2) }}% </p>
+            <p>{{ $totalAssignMilestonesRow }} milestones assigned </p>
+            <p>{{ $totalCompleteMilestonesRow }} milestones completed </p>
+            <p>Percentage by Count: {{ number_format($milestoneCompletionRatebyRow, 2) }}% </p>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>SL NO</th>
-                    <th>Project Manager ID</th>
-                    <th>Task ID</th>
-                    <th>Task Name</th>
-                    <th>Project Name</th>
-                    <th>Task Start</th>
-                    <th>Task Complete</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if(isset($dataview))
-                @foreach ($datafortasks as $key => $row)
-                <tr>
-                    <td>{{$key+1}}</td>
-                    <td>{{ $row->pm_id }}</td>
-                    <td>{{ $row->id }}</td>
-                    <td>{{ $row->heading }}</td>
-                    <td>{{ $row->project_name }}</td>
-                    <td>{{ $row->start_date }}</td>
-                    <td>{{ $row->updated_at }}</td>
-                </tr>
-                @endforeach
-                @endif
-            </tbody>
-        </table>
-
-        <br><br>
-        <table>
-            <thead>
-                <tr>
-                    <th>SL NO</th>
-                    <th>Client Name</th>
-                    <th>Project Name</th>
-                    <th>Project Budget</th>
-                    <th>Project Status</th>
-                    <th>Start Time</th>
-                    <th>Last Update Time</th>
-                </tr>
-
-            </thead>
-            <tbody> @if(isset($dataviewforProject))
-                @foreach ($dataviewforProject as $key => $row)
-                <tr>
-                    <td>{{$key+1}}</td>
-                    <td>{{ $row->name }}</td>
-                    <td>{{ $row->project_name }}</td>
-                    <td>{{ $row->project_budget }}</td>
-                    <td>{{ $row->status }}</td>
-                    <td>{{ $row->start_date }}</td>
-                    <td>{{ $row->updated_at }}</td>
-                </tr>
-                @endforeach
-                @endif
-            </tbody>
-        </table>
+            <h3>Milestone Completion Rate(Running)</h3>
+            <p>{{ $RunningtotalAssignMilestonesCost }} Dollar milestones assigned </p>
+            <p>{{ $RunningtotalCompleteMilestonesCost }} Dollar milestones completed </p>
+            <p>Percentage by Cost: {{ number_format($RunningmilestoneCompletionRatebyCost, 2) }}% </p>
+            <p>{{ $RunningtotalAssignMilestonesRow }} milestones assigned </p>
+            <p>{{ $RunningtotalCompleteMilestonesRow }} milestones completed </p>
+            <p>Percentage by Count: {{ number_format($RunningmilestoneCompletionRatebyRow, 2) }}% </p>
 
 
-    </div>
+            <h3>Task Completion Rate</h3>
+            <p>{{ $totalAssignTasksRow }} Tasks assigned </p>
+            <p>{{ $totalCompleteTasksRow }} Tasks completed </p>
+            <p>Percentage: {{ number_format($taskCompletionRate, 2) }}% </p>
 
+            <h3>Task Completion Rate (Running)</h3>
+            <p>{{ $RunningtotalAssignTasksRow }} Tasks assigned </p>
+            <p>{{ $RunningtotalCompleteTasksRow }} Tasks completed </p>
+            <p>Percentage: {{ number_format($RunningtaskCompletionRate, 2) }}% </p>
+
+            <h3>Project Completion Rate(Without QC and Completion Form)</h3>
+            <p>{{ $totalAssignProjectsSum }} Dollar assigned </p>
+            <p>{{ $ProjectCompletionWithoutQCCountbyCost }} Dollar completed </p>
+            <p>Percentage: {{ number_format($ProjectCompletionRatebyCostWithoutQC, 2) }}% </p>
+
+            <p>{{ $totalAssignProjectsRow }} Projects assigned </p>
+            <p>{{ $ProjectCompletionWithoutQCCountbyRow }} Projects completed </p>
+            <p>Percentage: {{ number_format($projectsCompletionRatebyRowWithoutQC, 2) }}% </p>
+
+
+            <h3>Project Completion Rate(Running Batch)</h3>
+            <p>{{ $totalRunningAssignProjectsSum }} Dollar assigned </p>
+            <p>{{ $totalRunningCompleteProjectsSum }} Dollar completed </p>
+            <p>Percentage: {{ number_format($RunningProjectCompletionRatebyCost, 2) }}% </p>
+            <p>{{ $totalRunningAssignProjectsRow }} Projects assigned </p>
+            <p>{{ $totalRunningCompleteProjectsRow }} Projects completed </p>
+            <p>Percentage: {{ number_format($RunningProjectsCompletionRatebyRow, 2) }}% </p>
+
+            @endif
+
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>SL NO</th>
+                        <th>Project Manager ID</th>
+                        <th>Client ID</th>
+                        <th>Client Name</th>
+                        <th>Project ID</th>
+                        <th>Project Name</th>
+                        <th>Project Budget</th>
+                        <th>Milestone ID</th>
+                        <th>Milestone Title</th>
+                        <th>Milestone Cost</th>
+                        <th>Milestone Start</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @if(isset($dataview))
+                    @foreach ($dataview as $key => $row)
+                    <tr>
+                        <td>{{$key+1}}</td>
+                        <td>{{ $row->pm_id }}</td>
+                        <td>{{ $row->client_id }}</td>
+                        <td>{{ $row->name }}</td>
+                        <td>{{ $row->id }}</td>
+                        <td>{{ $row->project_name }}</td>
+                        <td>{{ $row->project_budget }}</td>
+                        <td>{{ $row->milestone_id }}</td>
+                        <td>{{ $row->milestone_title }}</td>
+                        <td>{{ $row->cost }}</td>
+                        <td>{{ $row->created_at }}</td>
+
+                    </tr>
+                    @endforeach
+                    @endif
+                </tbody>
+            </table>
+            <br><br>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>SL NO</th>
+                        <th>Project Manager ID</th>
+                        <th>Task ID</th>
+                        <th>Task Name</th>
+                        <th>Project Name</th>
+                        <th>Task Start</th>
+                        <th>Task Complete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if(isset($dataview))
+                    @foreach ($datafortasks as $key => $row)
+                    <tr>
+                        <td>{{$key+1}}</td>
+                        <td>{{ $row->pm_id }}</td>
+                        <td>{{ $row->id }}</td>
+                        <td>{{ $row->heading }}</td>
+                        <td>{{ $row->project_name }}</td>
+                        <td>{{ $row->start_date }}</td>
+                        <td>{{ $row->updated_at }}</td>
+                    </tr>
+                    @endforeach
+                    @endif
+                </tbody>
+            </table>
+
+            <br><br>
+
+            <h3>Projects Data (Running)</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>SL NO</th>
+                        <th>Client Name</th>
+                        <th>Project Name</th>
+                        <th>Project Budget</th>
+                        <th>Project Status</th>
+                        <th>Start Time</th>
+                        <th>Last Update Time</th>
+                        <th>Status</th>
+
+                    </tr>
+
+                </thead>
+                <tbody> @if(isset($dataviewforProject))
+                    @foreach ($dataviewforProject as $key => $row)
+                    @php
+                    $startDate = \Carbon\Carbon::parse($row->start_date);
+                    $updatedAt = \Carbon\Carbon::parse($row->updated_at);
+                    $dateDifference = $updatedAt->diffInDays($startDate);
+                    @endphp
+                    @if($dateDifference <= 10
+                       &&
+                       $row->status !== 'in progress')
+                        <tr>
+                            <td>{{$key+1}}</td>
+                            <td>{{ $row->name }}</td>
+                            <td>{{ $row->project_name }}</td>
+                            <td>{{ $row->project_budget }}</td>
+                            <td>{{ $row->status }}</td>
+                            <td>{{ $row->start_date }}</td>
+                            <td>{{ $row->updated_at }}</td>
+                            <td style="background-color: rgb(68, 120, 68); ">Not Delayed</td>
+                        </tr>
+                        @else
+                        <tr>
+                            <td>{{$key+1}}</td>
+                            <td>{{ $row->name }}</td>
+                            <td>{{ $row->project_name }}</td>
+                            <td>{{ $row->project_budget }}</td>
+                            <td>{{ $row->status }}</td>
+                            <td>{{ $row->start_date }}</td>
+                            <td>{{ $row->updated_at }}</td>
+                            <td style="background-color: rgb(255, 17, 0); color: white">Delayed</td>
+                        </tr>
+                        @endif
+                        @endforeach
+                        @endif
+                </tbody>
+            </table>
+            <br><br>
+
+            <h3>Average Project Completion Time Data </h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>SL NO</th>
+                        <th>Client Name</th>
+                        <th>Project Name</th>
+                        <th>Project Budget</th>
+                        <th>Project Status</th>
+                        <th>Start Time</th>
+                        <th>Last Update Time</th>
+                        <th>Total Duration</th>
+                    </tr>
+
+                </thead>
+                <tbody> @if(isset($averageProjectCompletiontimesData))
+                    @foreach ($averageProjectCompletiontimesData as $key => $row)
+                    <tr>
+                        <td>{{$key+1}}</td>
+                        <td>{{ $row->name }}</td>
+                        <td>{{ $row->project_name }}</td>
+                        <td>{{ $row->project_budget }}</td>
+                        <td>{{ $row->status }}</td>
+                        <td>{{ $row->start_date }}</td>
+                        <td>{{ $row->updated_at }}</td>
+                        <td style="text-align: center">{{ $row->total_duration }} Days</td>
+                    </tr>
+                    @endforeach
+                    @endif
+                </tbody>
+            </table>
+            <br><br>
+
+            <h3>Project Cancelletion Data</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>SL NO</th>
+                        <th>Client Name</th>
+                        <th>Project Name</th>
+                        <th>Project Budget</th>
+                        <th>Project Status</th>
+                        <th>Start Time</th>
+                        <th>Last Update Time</th>
+
+                    </tr>
+
+                </thead>
+                <tbody> @if(isset($totalProjectCancelledData))
+                    @foreach ($totalProjectCancelledData as $key => $row)
+                    <tr>
+                        <td>{{$key+1}}</td>
+                        <td>{{ $row->name }}</td>
+                        <td>{{ $row->project_name }}</td>
+                        <td>{{ $row->project_budget }}</td>
+                        <td>{{ $row->status }}</td>
+                        <td>{{ $row->start_date }}</td>
+                        <td>{{ $row->updated_at }}</td>
+                    </tr>
+                    @endforeach
+                    @endif
+                </tbody>
+            </table>
+
+        </div>
+        <div class="container">
+            <h3> Project
+                Delay Request
+                Form</h3>
+            <form id="delayRequestForm"
+                  enctype="multipart/form-data">
+                @csrf
+                <div class="form-group">
+                    <label for="pm_id">Project Manager ID</label>
+                    <input type="number"
+                           class="form-control"
+                           id="pm_id"
+                           name="pm_id"
+                           required>
+                </div>
+                <div class="form-group">
+                    <label for="project_id">Project ID</label>
+                    <input type="number"
+                           class="form-control"
+                           id="project_id"
+                           name="project_id"
+                           required>
+                </div>
+                {{-- <div class="form-group">
+                    <label for="extra_time">Extra Days</label>
+                    <input type="number"
+                           class="form-control"
+                           id="extra_time"
+                           name="extra_time"
+                           required>
+                </div> --}}
+                <div class="form-group">
+                    <label for="extra_time">Extra Days</label>
+                    <select class="form-control"
+                            id="extra_time"
+                            name="extra_time"
+                            required>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Comment</label>
+                    <textarea class="form-control"
+                              id="pm_text"
+                              name="pm_text"
+                              rows="4"
+                              required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="images">Images</label>
+                    <input type="file"
+                           class="form-control"
+                           id="images"
+                           name="images[]"
+                           multiple
+                           required>
+                </div>
+                {{-- <button type="button"
+                        class="btn btn-primary"
+                        id="submitForm">Submit</button> --}}
+
+                <div class="form-group">
+                    <input type="submit"
+                           class=" btn btn-success"
+                           value="Save">
+                </div>
+            </form>
+        </div>
+
+
+
+
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+
+        <script>
+            $("#delayRequestForm").submit(function(e){
+      
+            e.preventDefault();
+             const formElement = document.getElementById('delayRequestForm');
+             const formData = new FormData(formElement);
+           //var formData  = new FormData(jQuery('#delayRequestForm')[0]);
+            //console.log(formData);
+
+            // $.ajaxSetup({
+            // headers: {
+            // 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            // }
+            // });
+
+            $.ajax({
+                url:"{{route("dashboard.delayRequestForm")}}",
+                type:'POST',
+                data:formData,
+                contentType:false,
+                processData:false,
+                success:function(data)
+                {
+                   
+                    document.getElementById('delayRequestForm').reset();
+                },
+            })
+
+
+        });
+    
+    
+        </script>
+
+
+    </body>
+
+    </html>
 
 
     {{-- @push('scripts')

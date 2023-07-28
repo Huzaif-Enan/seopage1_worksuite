@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class ClientForm extends Model
 {
-    use HasFactory;
-      protected $table = 'client_forms';
+  use HasFactory;
+  protected $table = 'client_forms';
 }
