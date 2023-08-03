@@ -3098,93 +3098,452 @@
             </table>
 
         </div>
-        <div class="container">
-            <h3> Project
-                Delay Request
-                Form</h3>
-            <form id="delayRequestForm"
-                  enctype="multipart/form-data">
-                @csrf
-                <div class="form-group">
-                    <label for="pm_id">Project Manager ID</label>
-                    <input type="number"
-                           class="form-control"
-                           id="pm_id"
-                           name="pm_id"
-                           required>
-                </div>
-                <div class="form-group">
-                    <label for="project_id">Project ID</label>
-                    <input type="number"
-                           class="form-control"
-                           id="project_id"
-                           name="project_id"
-                           required>
-                </div>
-                {{-- <div class="form-group">
-                    <label for="extra_time">Extra Days</label>
-                    <input type="number"
-                           class="form-control"
-                           id="extra_time"
-                           name="extra_time"
-                           required>
-                </div> --}}
-                <div class="form-group">
-                    <label for="extra_time">Extra Days</label>
-                    <select class="form-control"
-                            id="extra_time"
-                            name="extra_time"
-                            required>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="comment">Comment</label>
-                    <textarea class="form-control"
-                              id="pm_text"
-                              name="pm_text"
-                              rows="4"
-                              required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="images">Images</label>
-                    <input type="file"
-                           class="form-control"
-                           id="images"
-                           name="images[]"
-                           multiple
-                           required>
-                </div>
-                {{-- <button type="button"
-                        class="btn btn-primary"
-                        id="submitForm">Submit</button> --}}
+        {{----------- DELAY FORM REQUEST PROJECT MANAGER TO ADMIN -------------------------}}
 
-                <div class="form-group">
-                    <input type="submit"
-                           class=" btn btn-success"
-                           value="Save">
-                </div>
-            </form>
-        </div>
+        <h3> Project
+            Delay Request
+            Form</h3>
+        <form id="delayRequestForm"
+              enctype="multipart/form-data">
+            @csrf
+            <div class="form-group">
+                <label for="pm_id">Project Manager ID</label>
+                <input type="number"
+                       class="form-control"
+                       id="pm_id"
+                       name="pm_id"
+                       required>
+            </div>
+            <div class="form-group">
+                <label for="project_id">Project ID</label>
+                <input type="number"
+                       class="form-control"
+                       id="project_id"
+                       name="project_id"
+                       required>
+            </div>
+            {{-- <div class="form-group">
+                <label for="extra_time">Extra Days</label>
+                <input type="number"
+                       class="form-control"
+                       id="extra_time"
+                       name="extra_time"
+                       required>
+            </div> --}}
+            <div class="form-group">
+                <label for="extra_time">Extra Days</label>
+                <select class="form-control"
+                        id="extra_time"
+                        name="extra_time"
+                        required>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="comment">Comment</label>
+                <textarea class="form-control"
+                          id="pm_text"
+                          name="pm_text"
+                          rows="4"
+                          required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="images">Images</label>
+                <input type="file"
+                       class="form-control"
+                       id="images"
+                       name="images[]"
+                       multiple
+                       required>
+            </div>
+            {{-- <button type="button"
+                    class="btn btn-primary"
+                    id="submitForm">Submit</button> --}}
 
+            <div class="form-group">
+                <input type="submit"
+                       class=" btn btn-success"
+                       value="Save">
+            </div>
+        </form>
+</div>
 
-
-
-        <!-- Optional JavaScript -->
-        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+{{-----------END OF DELAY FORM REQUEST PROJECT MANAGER TO ADMIN -------------------------}}
 
 
-        <script>
-            $("#delayRequestForm").submit(function(e){
+<div class="form-group">
+    <form action="{{ route('dashboard.pmPointsFilter') }}"
+          method="POST">
+        {{ csrf_field() }}
+        <label for="projectmanager">NAME:</label>
+        <select name="pmid"
+                id="dropdown1"
+                required>
+            <option value="209">Diner M Islam</option>
+            <option value="210">Farhan Rahman</option>
+            <option value="245">Mohammad Fazle Rabbi</option>
+        </select>
+        <label for="start_date">Start Date:</label>
+        <input type="date"
+               name="start_date"
+               id="start_date"
+               required>
+
+        <label for="end_date">End Date:</label>
+        <input type="date"
+               name="end_date"
+               id="end_date"
+               required>
+
+        <button type="submit"
+                class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+<div>@if(isset($deliverableProjects))
+    <h4 style="color: rgba(16, 47, 200, 0.777)">Date:{{ $startDate1->format('Y-m-d') }} to {{ $endDate1->format('Y-m-d') }} </h4>
+    @endif
+</div>
+
+{{----------- ------------------------------- Bonus Weekly Hour Point------------------------------------------}}
+
+<div>
+
+    <h3> Bonus Weekly Hour Points (Above 100 hours)</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>SL NO</th>
+                <th>Project Manager Name</th>
+                <th>Weekly First Day </th>
+                <th>Weekly Last Day</th>
+                <th>Total Hour (Weekly)</th>
+                <th>Earned Points</th>
+
+            </tr>
+
+        </thead>
+        <tbody> @if(isset($bonus_weekly_hours_points))
+            @foreach ($bonus_weekly_hours_points as $key => $row)
+            <tr>
+                <td>{{$key+1}}</td>
+                <td>{{ $row['project_manager'] }}</td>
+                <td>{{ $row['start_date'] }}</td>
+                <td>{{ $row['end_date'] }}</td>
+                <td>{{ $row['total_weekly_hour'] }} Hours</td>
+                <td>{{ $row['bonus_earned_points']}}</td>
+            </tr>
+            @endforeach
+            @endif
+        </tbody>
+    </table>
+
+    @if(isset($bonus_sum_weekly_hours_points))
+    <h4>Total Earned Bonus Points: {{$bonus_sum_weekly_hours_points}}</h4>
+    @endif
+</div>
+
+
+{{----------- -------------------------------End of Bonus Weekly Hour Point------------------------------------------}}
+
+{{----------- ------------------------------- Weekly Billable Hour Point------------------------------------------}}
+
+<div>
+
+    <h3>Weekly Billable Hour Points(3% of Hourly Projects)</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>SL NO</th>
+                <th>Project Manager Name</th>
+                <th>Weekly First Day </th>
+                <th>Weekly Last Day</th>
+                <th>Total Billable Hour (Weekly)</th>
+                <th>Earned Points</th>
+
+            </tr>
+
+        </thead>
+        <tbody> @if(isset($weekly_billable_hours_points))
+            @foreach ($weekly_billable_hours_points as $key => $row)
+            <tr>
+                <td>{{$key+1}}</td>
+                <td>{{ $row['project_manager'] }}</td>
+                <td>{{ $row['start_date'] }}</td>
+                <td>{{ $row['end_date'] }}</td>
+                <td>{{ $row['total_weekly_billable_hour'] }} Dollar</td>
+                <td>{{ $row['earned_points']}}</td>
+            </tr>
+            @endforeach
+            @endif
+        </tbody>
+    </table>
+
+    @if(isset($sum_weekly_billable_hours_points))
+    <h4>Total Earned Bonus Points: {{$sum_weekly_billable_hours_points}}</h4>
+    @endif
+</div>
+
+
+{{----------- -------------------------------End of Weekly Billable Hour Point------------------------------------------}}
+
+{{----------- ------------------------------- Weekly Project Complete Bonus Point------------------------------------------}}
+
+<div>
+
+    <h3>Weekly Project Completion Bonus Point</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>SL NO</th>
+                <th>Project ID</th>
+                <th>Project Manager Name</th>
+                <th>Client Name</th>
+                <th>Project Name</th>
+                <th>Project Budget</th>
+                <th>Form Fillup Date </th>
+                <th>Start Date </th>
+                <th>Complete Date</th>
+
+
+
+            </tr>
+
+        </thead>
+        <tbody> @if(isset($completed_projects_count_data))
+            @foreach ($completed_projects_count_data as $key => $row)
+            <tr>
+                <td>{{$key+1}}</td>
+                <td>{{ $row->id }}</td>
+                <td>{{ $row->manager_name }}</td>
+                <td>{{ $row->client_name }}</td>
+                <td>{{ $row->project_name }}</td>
+                <td>{{ $row->project_budget }}</td>
+                <td>{{ $row->sales_start_date }}</td>
+                <td>{{ $row->start_date }}</td>
+                <td>{{ $row->updated_at }}</td>
+
+            </tr>
+            @endforeach
+            @endif
+        </tbody>
+    </table>
+
+    @if(isset($completed_projects_count_points))
+    <h4>Total Earned Bonus Points: {{$completed_projects_count_points}}</h4>
+    @endif
+</div>
+
+
+{{----------- -------------------------------End of Weekly Project Complete Bonus Point------------------------------------------}}
+
+
+
+
+{{----------- -------------------------------Deadline Comparision with Complete time Data------------------------------------------}}
+<div>
+
+    <h3>Deadline Time Comparison with Complete Time </h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>SL NO</th>
+                <th>Project ID</th>
+                <th>Project Manager Name</th>
+                <th>Client Name</th>
+                <th>Project Name</th>
+                <th>Start Date </th>
+                <th>Deadline Date</th>
+                <th>Complete Date</th>
+                <th>Project Budget</th>
+                <th>Earned Points</th>
+
+            </tr>
+
+        </thead>
+        <tbody> @if(isset($project_deadline_complete_data))
+            @foreach ($project_deadline_complete_data as $key => $row)
+            <tr>
+                <td>{{$key+1}}</td>
+                <td>{{ $row->id }}</td>
+                <td>{{ $row->manager_name }}</td>
+                <td>{{ $row->client_name }}</td>
+                <td>{{ $row->project_name }}</td>
+                <td>{{ $row->start_date }}</td>
+                <td>{{ $row->deadline }}</td>
+                <td>{{ $row->updated_at }}</td>
+                <td>{{ $row->project_budget }}</td>
+                <td>{{ $project_deadline_complete_points[$row->id]}}</td>
+            </tr>
+            @endforeach
+            @endif
+        </tbody>
+    </table>
+
+    @if(isset($total_project_deadline_complete_points))
+    <h4>Total Earned Points: {{$total_project_deadline_complete_points}}</h4>
+    @endif
+</div>
+
+
+
+
+{{----------- -------------------------------END of Deadline Comparision with Complete time Data-------------------------------------------}}
+
+{{----------- -------------------------------Estimation Comparision Data------------------------------------------}}
+
+<div>
+
+    <h3>Estimate Time Comparison with Complete Time </h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>SL NO</th>
+                <th>Project ID</th>
+                <th>Project Manager Name</th>
+                <th>Client Name</th>
+                <th>Project Name</th>
+                <th>Estimate Time (Minutes)</th>
+                <th>Complete Time (Minutes)</th>
+                <th>Accuracy</th>
+                <th>Earned Points</th>
+
+            </tr>
+
+        </thead>
+        <tbody> @if(isset($estimate_log_time_date))
+            @foreach ($estimate_log_time_date as $key => $row)
+            <tr>
+                <td>{{$key+1}}</td>
+                <td>{{ $row->id }}</td>
+                <td>{{ $row->manager_name }}</td>
+                <td>{{ $row->client_name }}</td>
+                <td>{{ $row->project_name }}</td>
+                <td>{{ $row->estimation_time * 60 }}</td>
+                <td>{{ $row->project_total_minutes }}</td>
+                <td>{{ number_format($manager_estimate_percentage[$row->id],2) }}%</td>
+                <td>{{ $manager_estimate_points[$row->id]}}</td>
+            </tr>
+            @endforeach
+            @endif
+        </tbody>
+    </table>
+
+    @if(isset($total_estimate_points))
+    <h4>Total Earned Points: {{$total_estimate_points}}</h4>
+    @endif
+</div>
+{{----------- -------------------------------END of Estimation Comparision Data------------------------------------------}}
+
+
+
+
+{{----------- -------------------------------Deliverable Points Data------------------------------------------}}
+<div>
+    <h3>Deliverable Points Data (Accept By Project Manager) </h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>SL NO</th>
+                <th>Project ID</th>
+                <th>Project Manager Name</th>
+                <th>Client Name</th>
+                <th>Project Name</th>
+                <th>Points Earned</th>
+                <th>Start Date</th>
+                <th>Signing Date</th>
+
+            </tr>
+
+        </thead>
+        <tbody> @if(isset($deliverableProjects))
+            @foreach ($deliverableProjects as $key => $row)
+            <tr>
+                <td>{{$key+1}}</td>
+                <td>{{$row->id}}</td>
+                <td>{{ $row->manager_name }}</td>
+                <td>{{ $row->client_name }}</td>
+                <td>{{ $row->project_name }}</td>
+                <td>{{ $deliverablePoints[$row->id] }}</td>
+                {{-- <td>{{ $row->start_date }}</td> --}}
+                <td>{{ $row->min_created_at }}</td>
+                <td>{{ $row->created_at }}</td>
+            </tr>
+            @endforeach
+            @endif
+        </tbody>
+    </table>
+    @if(isset($deliverableProjects))
+    <h4>Total Earned Points: {{$totalDeliverablePoints}}</h4>
+    @endif
+
+</div>
+
+
+<div>
+
+    <h3>Deliverable Points Data (Assigned By Sales) </h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>SL NO</th>
+                <th>Project ID</th>
+                <th>Project Manager Name</th>
+                <th>Client Name</th>
+                <th>Project Name</th>
+                <th>Points Earned</th>
+                <th>Form Fillup Date</th>
+                <th>Signing Date</th>
+
+            </tr>
+
+        </thead>
+        <tbody> @if(isset($deliverableProjectsAssignedBySales))
+            @foreach ($deliverableProjectsAssignedBySales as $key => $row)
+            <tr>
+                <td>{{$key+1}}</td>
+                <td>{{ $row->id }}</td>
+                <td>{{ $row->manager_name }}</td>
+                <td>{{ $row->client_name }}</td>
+                <td>{{ $row->project_name }}</td>
+                <td>{{ $deliverablePointsAssignedBySales[$row->id] }}</td>
+                <td>{{ $row->sales_start_date }}</td>
+                <td>{{ $row->created_at }}</td>
+            </tr>
+            @endforeach
+            @endif
+        </tbody>
+    </table>
+    @if(isset($deliverableProjectsAssignedBySales))
+    <h4>Total Earned Points: {{$totalDeliverablePointsAssignedBySales}}</h4>
+    @endif
+
+</div>
+{{----------- -------------------------------END of Deliverable Points Data------------------------------------------}}
+
+
+
+
+
+<div>
+
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+
+    <script>
+        $("#delayRequestForm").submit(function(e){
       
             e.preventDefault();
              const formElement = document.getElementById('delayRequestForm');
@@ -3215,7 +3574,7 @@
         });
     
     
-        </script>
+    </script>
 
 
     </body>

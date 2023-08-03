@@ -37,7 +37,6 @@ use Carbon\CarbonPeriod;
 use Froiden\Envato\Traits\AppBoot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\DATEDIFF;
 use App\Models\ClientDelay;
 use PHPUnit\Framework\ActualValueIsNotAnObjectException;
 
@@ -942,41 +941,6 @@ class DashboardController extends AccountBaseController
             ->count();
 
 
-        //Cycle delayed projects  with delay count
-
-        // $delayedProjectsCount = Project::leftJoin('client_delays', 'projects.id', '=', 'client_delays.project_id')
-        // ->where(function ($q) use ($startDate, $assignEndDate, $pmId) {
-        //     $q->Where(function ($q2) {
-        //         $q2->whereNotNull('client_delays.project_id') // Check if project ID exists in client_delays
-        //         ->where('client_delays.status', '=', 'approved')
-        //         ->whereRaw(DB::raw('DATEDIFF(projects.updated_at, DATE_ADD(projects.start_date, INTERVAL client_delays.extra_time DAY)) > 10'))
-        //         ->orWhereRaw('DATEDIFF(projects.updated_at, projects.start_date) > 10');
-        //     })
-        //     ->where('projects.status', '!=', 'in progress')
-        //     ->whereBetween('projects.start_date', [$startDate, $assignEndDate])
-        //     ->where('projects.pm_id',
-        //         $pmId
-        //     );
-        // })
-        // ->orWhere(function ($q3) use ($startDate, $assignEndDate, $pmId) {
-        //     $q3->where('projects.status',
-        //         '=',
-        //         'in progress'
-        //     )
-        //     ->Where(function ($q4) {
-        //         $q4->whereNotNull('client_delays.project_id') // Check if project ID exists in client_delays
-        //         ->where('client_delays.status', '=', 'approved')
-        //         ->whereRaw(DB::raw('DATEDIFF(CURDATE(), DATE_ADD(projects.start_date, INTERVAL client_delays.extra_time DAY)) > 10'))
-        //         ->orWhereRaw('DATEDIFF(CURDATE(), projects.start_date) > 10');
-        //     })
-        //     ->whereBetween('projects.start_date', [$startDate, $assignEndDate])
-        //     ->where('projects.pm_id',
-        //         $pmId
-        //     );
-        // })
-
-        // ->count();
-
 
         //Cycle delayed complete projects
 
@@ -1055,6 +1019,9 @@ class DashboardController extends AccountBaseController
 
         //     $variableDate = date('Y-m-d', strtotime($variableDate . ' +1 day'));
         // }
+
+
+
 
 
         return view('dashboard.employee.pm_dashboard', compact(
@@ -1165,110 +1132,319 @@ class DashboardController extends AccountBaseController
             $project->save();
         }
     }
+
+
+
+    public function pmPointsFilter(Request $request)
+    {
+        //dd($request->all());
+        // $pmId = auth()->id();
+        $pmId = $request->input('pmid');
+
+        //$userId = $pmId; // Replace with the actual user ID input
+        // $username = DB::table('users')->where('id', $userId)->value('name');
+
+        $startDate = $request->input('start_date');
+        $endDate1 = $request->input('end_date');
+        $endDate = Carbon::parse($endDate1)->addDays(1)->format('Y-m-d');
+        // $startDate = $request->input('start_date');
+        $startDate1 = Carbon::parse($startDate);
+        // $endDate = $request->input('end_date');
+        $endDate1 = Carbon::parse($endDate1);
+
+
+
+        // deliverable when project manager accept the project //
+
+        $deliverableProjects = DB::table('projects')
+            ->join('contract_signs', 'projects.id', '=', 'contract_signs.project_id')
+            ->join('users as managers', 'projects.pm_id', '=', 'managers.id')
+            ->join('users as clients', 'clients.id', '=', 'projects.client_id')
+            ->join('project_members', 'projects.id', '=', 'project_members.project_id')
+            ->whereRaw('project_members.created_at = (
+                 SELECT MIN(created_at) 
+                 FROM project_members 
+                 WHERE project_members.project_id = projects.id AND project_members.user_id = projects.pm_id 
+             )')
+            ->whereBetween('projects.start_date', [$startDate, $endDate])
+            //->whereBetween('project_members.created_at', [$startDate, $endDate])
+            ->where('projects.pm_id', $pmId)
+            ->distinct('projects.id')
+            ->select('projects.id', 'projects.project_name', 'projects.start_date', 'project_members.created_at as min_created_at', 'contract_signs.created_at', 'managers.name as manager_name', 'clients.name as client_name')
+            ->get();
+
+        $deliverablePoints = [];
+        foreach ($deliverableProjects as $project) {
+            $project_startDate = Carbon::parse($project->min_created_at);
+            $contractDate = Carbon::parse($project->created_at);
+            $daysDifference = $project_startDate->diffInSeconds($contractDate);
+
+            if ($daysDifference > 172800) {
+                $difference = ($daysDifference - 172800) / 86400;
+                $difference = floor($difference);
+                $deliverablePoints[$project->id] = max(4.5 - ($difference * 0.5), 0);  // 6 beacause if 3 days passed it will be 4.5 so 6- 3* 0.5 
+            } else {
+                $deliverablePoints[$project->id] = 5;
+            }
+        }
+        $totalDeliverablePoints = array_sum($deliverablePoints);
+
+        //  deliverable when Sales team fillup the form //
+
+        $deliverableProjectsAssignedBySales = DB::table('projects')
+            ->join('contract_signs', 'projects.id', '=', 'contract_signs.project_id')
+            ->join('p_m_projects', 'projects.id', '=', 'p_m_projects.project_id')
+            ->join('users as managers', 'projects.pm_id', '=', 'managers.id')
+            ->join('users as clients', 'projects.client_id', '=', 'clients.id')
+            ->whereBetween('projects.start_date', [$startDate, $endDate])
+            ->where('projects.pm_id', $pmId)
+            ->distinct('projects.id')
+            ->select('projects.id', 'projects.project_name', 'p_m_projects.created_at as sales_start_date', 'contract_signs.created_at', 'managers.name as manager_name', 'clients.name as client_name')
+            ->get();
+
+        $deliverablePointsAssignedBySales = [];
+        foreach ($deliverableProjectsAssignedBySales as $project) {
+            $sales_startDate = Carbon::parse($project->sales_start_date);
+            $contractDate = Carbon::parse($project->created_at);
+            $daysDifference = $sales_startDate->diffInSeconds($contractDate);
+
+            if ($daysDifference > 172800) {
+                $difference = ($daysDifference - 172800) / 86400;
+                $difference = floor($difference);
+                $deliverablePointsAssignedBySales[$project->id] = max(4.5 - ($difference * 0.5), 0);
+            } else {
+                $deliverablePointsAssignedBySales[$project->id] = 5;
+            }
+        }
+
+        $totalDeliverablePointsAssignedBySales = array_sum($deliverablePointsAssignedBySales);
+
+
+        //   Project Manager compared with Estimate Time and Developer Log Time //
+
+        $estimate_log_time_date =  DB::table('projects')
+            ->leftJoin('project_deliverables', 'projects.id', '=', 'project_deliverables.project_id')
+            ->leftJoin('project_time_logs', 'projects.id', '=', 'project_time_logs.project_id')
+            ->join('p_m_projects', 'projects.id', '=', 'p_m_projects.project_id')
+            ->join('users as managers', 'projects.pm_id', '=', 'managers.id')
+            ->join('users as clients', 'projects.client_id', '=', 'clients.id')
+            ->select('projects.id', 'projects.project_name', 'managers.name as manager_name', 'clients.name as client_name', 'project_deliverables.estimation_time', DB::raw('SUM(project_time_logs.total_minutes) as project_total_minutes'))
+            ->where('projects.status', '=', 'finished')
+            ->whereBetween('projects.start_date', [$startDate, $endDate])
+            ->where('projects.pm_id', $pmId)
+            ->groupBy('project_time_logs.project_id')
+            ->get();
+
+
+
+        $manager_estimate_percentage = [];
+        $manager_estimate_points = [];
+        foreach ($estimate_log_time_date as $project) {
+            if ($project->estimation_time > 0) {
+                $estimation_time = $project->estimation_time * 60;
+                $estimate_difference_percentage = ($project->project_total_minutes / $estimation_time) * 100;
+                $manager_estimate_percentage[$project->id] = $estimate_difference_percentage;
+
+                if ($manager_estimate_percentage[$project->id] >= 81 && $manager_estimate_percentage[$project->id] <= 120) {
+                    $manager_estimate_points[$project->id] = 5;
+                } else if ($manager_estimate_percentage[$project->id] >= 71 && $manager_estimate_percentage[$project->id] <= 80 || $manager_estimate_percentage[$project->id] >= 121 && $manager_estimate_percentage[$project->id] <= 130) {
+                    $manager_estimate_points[$project->id] = 4;
+                } else if ($manager_estimate_percentage[$project->id] >= 61 && $manager_estimate_percentage[$project->id] <= 70 || $manager_estimate_percentage[$project->id] >= 131 && $manager_estimate_percentage[$project->id] <= 140) {
+                    $manager_estimate_points[$project->id] = 3;
+                } else if ($manager_estimate_percentage[$project->id] >= 56 && $manager_estimate_percentage[$project->id] <= 60 || $manager_estimate_percentage[$project->id] >= 141 && $manager_estimate_percentage[$project->id] <= 145) {
+                    $manager_estimate_points[$project->id] = 2;
+                } else if ($manager_estimate_percentage[$project->id] >= 51 && $manager_estimate_percentage[$project->id] <= 55 || $manager_estimate_percentage[$project->id] >= 146 && $manager_estimate_percentage[$project->id] <= 150) {
+                    $manager_estimate_points[$project->id] = 1;
+                } else {
+                    $manager_estimate_points[$project->id] = -5;
+                }
+            } else {
+                $estimate_difference_percentage = 0;
+                $manager_estimate_percentage[$project->id] = $estimate_difference_percentage;
+                $manager_estimate_points[$project->id] = 0;
+            }
+        }
+        $total_estimate_points = array_sum($manager_estimate_points);
+
+        //   Project Manager compared with Deadline Time and Complete Time //
+
+        $project_deadline_complete_data = DB::table('projects')
+            ->join('users as managers', 'projects.pm_id', '=', 'managers.id')
+            ->join('users as clients', 'projects.client_id', '=', 'clients.id')
+            ->whereBetween('projects.start_date', [$startDate, $endDate])
+            ->whereNotNull('projects.deadline')
+            ->where('projects.status', 'finished')
+            ->where('projects.pm_id', $pmId)
+            ->select('projects.id', 'projects.project_name', 'projects.project_budget', 'projects.start_date', 'projects.deadline', 'projects.updated_at', 'managers.name as manager_name', 'clients.name as client_name')
+            ->get();
+
+        $project_deadline_complete_points = [];
+        foreach ($project_deadline_complete_data as $project) {
+            $deadline = Carbon::parse($project->deadline)->addDays(1);
+            $complete_time = Carbon::parse($project->updated_at);
+
+
+            if ($deadline >= $complete_time) {
+                $project_deadline_complete_points[$project->id] = $project->project_budget / 100;
+            } else {
+                $project_deadline_complete_points[$project->id] = 0;
+            }
+        }
+
+        $total_project_deadline_complete_points = array_sum($project_deadline_complete_points);
+
+        // Project Manager  complete projects  in a weak and get bonus points
+
+        $completed_projects_count_data = DB::table('projects')
+            ->join('users as managers', 'projects.pm_id', '=', 'managers.id')
+            ->join('users as clients', 'projects.client_id', '=', 'clients.id')
+            ->join('p_m_projects', 'projects.id', '=', 'p_m_projects.project_id')
+            ->whereBetween('projects.updated_at', [$startDate, $endDate])
+            ->whereRaw('DATEDIFF(projects.updated_at, projects.start_date) <= 7')
+            ->where('projects.status', 'finished')
+            ->where('projects.pm_id', $pmId)
+            ->distinct('projects.id')
+            ->select('projects.id', 'projects.project_name', 'projects.project_budget', 'p_m_projects.created_at as sales_start_date', 'projects.start_date', 'projects.updated_at', 'managers.name as manager_name', 'clients.name as client_name')
+            ->get();
+
+        $completed_projects_count = DB::table('projects')
+            ->join('users as managers', 'projects.pm_id', '=', 'managers.id')
+            ->join('users as clients', 'projects.client_id', '=', 'clients.id')
+            ->join('p_m_projects', 'projects.id', '=', 'p_m_projects.project_id')
+            ->whereBetween('projects.updated_at', [$startDate, $endDate])
+            ->whereRaw('DATEDIFF(projects.updated_at, p_m_projects.created_at) <= 7')
+            ->where('projects.status', 'finished')
+            ->where('projects.pm_id', $pmId)
+            ->distinct('projects.id')
+            ->count();
+
+        if ($completed_projects_count >= 10) {
+            $completed_projects_count_points = 50;
+        } else if ($completed_projects_count >= 8) {
+            $completed_projects_count_points = 30;
+        } else if ($completed_projects_count >= 5) {
+            $completed_projects_count_points = 15;
+        } else $completed_projects_count_points = 0;
+
+
+        //Billable Hours Completed By Project manager
+
+        $weekly_biilable_hours_points = [];
+        $current_date = $startDate;
+        while ($current_date <= $endDate) {
+
+            $weekly_interval_start = $current_date;
+            $weekly_interval_end = date('Y-m-d', strtotime($current_date . ' +6 days')); // 01 00:00:00 to 08 00:00:00 it can be 7 days 
+
+            if ($weekly_interval_end > $endDate) break;
+
+            $total_billable_hour = DB::table('projects')
+                ->join('users', 'projects.pm_id', '=', 'users.id')
+                ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+                ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+                ->join('deals', 'projects.deal_id', '=', 'deals.id')
+                ->where('deals.project_type', 'hourly')
+                ->whereBetween('payments.paid_on', [$weekly_interval_start, $weekly_interval_end])
+                ->where('users.id', $pmId)
+                ->sum('payments.amount');
+
+            $username = DB::table('users')->where('id', $pmId)->value('name');
+
+            $weekly_billable_hours_points[] = [
+                'project_manager' => $username,
+                'start_date' => $weekly_interval_start,
+                'end_date' => $weekly_interval_end,
+                'total_weekly_billable_hour' => $total_billable_hour,
+                'earned_points' => ($total_billable_hour / 100) * 3,
+            ];
+
+
+            $current_date = date('Y-m-d', strtotime($current_date . ' +7 days'));
+        }
+
+        $sum_weekly_billable_hours_points = 0;
+
+        foreach ($weekly_billable_hours_points as $totalpoints) {
+            $sum_weekly_billable_hours_points  += $totalpoints['earned_points'];
+        }
+
+
+        //Above 100 Billable Hours Bonus Point  Completed By Project manager
+
+        $bonus_weekly_hours_points = [];
+        $current_date = $startDate;
+        while ($current_date <= $endDate) {
+
+            $weekly_interval_start = $current_date;
+            $weekly_interval_end = date('Y-m-d', strtotime($current_date . ' +6 days')); // 01 00:00:00 to 08 00:00:00 it can be 7 days 
+
+            if ($weekly_interval_end > $endDate) break;
+
+            $bonus_above_billable_hours = DB::table('projects')
+                ->join('users', 'projects.pm_id', '=', 'users.id')
+                ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+                ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+                ->join('deals', 'projects.deal_id', '=', 'deals.id')
+                ->where('deals.project_type', 'hourly')
+                ->whereBetween('payments.paid_on', [$weekly_interval_start, $weekly_interval_end])
+                ->where('users.id', $pmId)
+                ->select('project_milestones.id', 'deals.hourly_rate', 'deals.amount')
+                ->get();
+
+            $username = DB::table('users')->where('id', $pmId)->value('name');
+            $total_weekly_hour = 0;
+            foreach ($bonus_above_billable_hours  as $project) {
+                if ($project->amount > 0) {
+
+                    $total_weekly_hour = $total_weekly_hour + ($project->amount / $project->hourly_rate);
+                }
+            }
+            if ($total_weekly_hour >= 180) {
+                $total_weekly_hour_points = 30;
+            } else if ($total_weekly_hour >= 100) {
+                $total_weekly_hour_points = 20;
+            } else $total_weekly_hour_point = 0;
+
+            $bonus_weekly_hours_points[] = [
+                'project_manager' => $username,
+                'start_date' => $weekly_interval_start,
+                'end_date' => $weekly_interval_end,
+                'total_weekly_hour' => $total_weekly_hour,
+                'bonus_earned_points' => $total_weekly_hour_point,
+            ];
+
+            $current_date = date('Y-m-d', strtotime($current_date . ' +7 days'));
+        }
+
+        $bonus_sum_weekly_hours_points = 0;
+
+        foreach ($bonus_weekly_hours_points as $totalpoints) {
+            $bonus_sum_weekly_hours_points += $totalpoints['bonus_earned_points'];
+        }
+
+
+        return view('dashboard.employee.pm_dashboard', compact(
+            'startDate1',
+            'endDate1',
+            'bonus_sum_weekly_hours_points',
+            'bonus_weekly_hours_points',
+            'sum_weekly_billable_hours_points',
+            'weekly_billable_hours_points',
+            'completed_projects_count_points',
+            'completed_projects_count_data',
+            'project_deadline_complete_data',
+            'project_deadline_complete_points',
+            'total_project_deadline_complete_points',
+            'total_estimate_points',
+            'manager_estimate_points',
+            'estimate_log_time_date',
+            'manager_estimate_percentage',
+            'deliverableProjectsAssignedBySales',
+            'deliverablePointsAssignedBySales',
+            'totalDeliverablePointsAssignedBySales',
+            'deliverableProjects',
+            'deliverablePoints',
+            'totalDeliverablePoints'
+        ));
+    }
 }
-
-
-
-// // app/DelayedProject.php
-// namespace App;
-
-// use Illuminate\Database\Eloquent\Model;
-
-// class DelayedProject extends Model
-// {
-//     protected $table = 'client_delay';
-
-//     protected $fillable = [
-//         'pm_id', 'pm_text', 'status', 'approved_by', 'extra_time', 'pm_file'
-//     ];
-
-//     protected $casts = [
-//         'pm_file' => 'array'
-//     ];
-// }
-
-
-
-
-// public function filter(Request $request)
-//     {
-//         // Get the start date and end date from the request
-//         $startDate = $request->input('start_date');
-//         $afterAssignStartDate = Carbon::parse($startDate)->addDays(1)->format('Y-m-d');
-//         $assignEndDate = $request->input('end_date');
-//         $releaseEndDate = Carbon::parse($assignEndDate)->addDays(10)->format('Y-m-d');
-
-//         // Get the project manager ID (assuming it's available in the authenticated user or provided in the request)
-//         $projectManagerId = auth()->user()->id;
-
-//         // Join projects and project_milestones tables
-//         $query = Project::join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
-//             ->join('users', 'projects.client_id', '=', 'users.id')
-//             ->where('projects.pm_id', $projectManagerId);
-
-//         // Filter project_milestones where invoice_id is not null and join with payments table
-//         $query->whereNotNull('project_milestones.invoice_id')
-//             ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id');
-
-//         // Filter payments where status is complete
-//         $query->where('payments.status', 'complete');
-
-//         // Filter payments where paid_on date is within the specified range
-//         $query->whereBetween('payments.paid_on', [$startDate, $releaseEndDate]);
-//         $query->whereNotBetween('project_milestones.created_at', [$afterAssignStartDate, $releaseEndDate]);
-//         $query->select('users.name', 'projects.project_name', 'projects.project_budget', 'project_milestones.actual_cost', 'project_milestones.created_at', 'project_milestones.milestone_title', 'payments.status', 'payments.paid_on');
-//         // Count the number of milestones completed
-
-//         $completedMilestonesGet = $query->get();
-//         $completedMilestonesCount = $query->count();
-//         $completedMilestonesValueCount = $query->sum('actual_cost');
-
-
-//         //total milestone assigned by project manager//
-//         $query = Project::join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
-//             ->where('projects.pm_id', $projectManagerId);
-//         $query->whereBetween('project_milestones.created_at', [$startDate, $assignEndDate]);
-//         $query->whereNull('project_milestones.invoice_id');
-//         $assignMilestoneWithoutComplete = $query->count();
-//         $assignMilestonesValueCountWithoutComplete = $query->sum('actual_cost');
-
-//         $totalAssignMilestones = $assignMilestoneWithoutComplete + $completedMilestonesCount; // countwise
-//         $totalAssignMilestonesValue = $assignMilestonesValueCountWithoutComplete + $completedMilestonesValueCount; //valuewise
-
-//         $milestoneCompletionRateCountwise = 0; // Default value in case $assignCount is zero
-//         $milestoneCompletionRateValuewise = 0; // Default value in case $assignSum is zero
-//         if ($totalAssignMilestones != 0) {
-//             $milestoneCompletionRateCountwise = ($completedMilestonesCount / $totalAssignMilestones) * 100;
-//         }
-
-//         if ($totalAssignMilestonesValue != 0) {
-//             $milestoneCompletionRateValuewise = ($completedMilestonesValueCount / $totalAssignMilestonesValue) * 100;
-//         }
-//         // all assigning milestones data for project manager
-//         $query = Project::join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
-//             ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
-//             ->join('users', 'projects.client_id', '=', 'users.id')
-//             ->whereBetween('project_milestones.created_at', [$startDate, $assignEndDate])
-//             ->orwhereBetween('payments.paid_on', [$startDate, $releaseEndDate]);
-//         $query->select('users.name', 'projects.project_name', 'projects.project_budget', 'project_milestones.actual_cost', 'project_milestones.created_at', 'project_milestones.milestone_title', 'payments.status', 'payments.paid_on');
-//         $allAssignedMilestonesGet = $query->get();
-
-//         return view('dashboard.employee.pm_dashboard', compact('startDate', 'assignEndDate', 'allAssignedMilestonesGet', 'completedMilestonesValueCount', 'completedMilestonesCount', 'completedMilestonesGet', 'totalAssignMilestonesValue', 'milestoneCompletionRateCountwise', 'milestoneCompletionRateValuewise', 'totalAssignMilestones'));
-//     }
-
-
-// use Illuminate\Support\Facades\DB;
-
-// $startDate = '2023-01-01';
-// $endDate = '2023-12-31';
-
-// $pmId = auth()->id();
-
-// $totalCost = DB::table('users')
-//     ->join('projects', 'users.id', '=', 'projects.pm_id')
-//     ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
-//     ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
-//     ->where('users.id', $pmId)
-//     ->whereNotNull('project_milestones.invoice_id')
-//     ->whereBetween('payments.paid_on', [$startDate, $endDate])
-//     ->sum('project_milestones.cost');
