@@ -463,15 +463,17 @@ class DashboardController extends AccountBaseController
         //total milestone assigned by project manager//
 
 
+
+
         $query = Project::join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
-            ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+            ->leftJoin('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
             ->where('projects.pm_id', $pmId)
-            ->whereBetween('project_milestones.created_at', [$startDate, $assignEndDate])
-            ->orWhere(function ($query) use ($startDate, $releaseEndDate, $pmId) {
-                $query->where('project_milestones.created_at', '<', $startDate)
-                    //  ->orWhere('payments.paid_on', '>', $releaseEndDate);
-                    ->WhereBetween('payments.paid_on', [$startDate, $releaseEndDate])
-                    ->where('projects.pm_id', $pmId);
+            ->where(function ($q1) use ($startDate, $assignEndDate, $releaseEndDate) {
+                $q1->whereBetween('project_milestones.created_at', [$startDate, $assignEndDate])
+                    ->orWhere(function ($q2) use ($startDate, $releaseEndDate) {
+                        $q2->where('project_milestones.created_at', '<', $startDate)
+                            ->WhereBetween('payments.paid_on', [$startDate, $releaseEndDate]);
+                    });
             });
 
 
@@ -492,11 +494,11 @@ class DashboardController extends AccountBaseController
         }
 
         //View milestone history by project manager//
-        $dataview = Project::select('projects.pm_id', 'projects.client_id', 'clients.name', 'projects.id', 'projects.project_name', 'projects.project_budget', 'project_milestones.id as milestone_id', 'project_milestones.milestone_title', 'project_milestones.cost', 'project_milestones.created_at')
+        $dataview = Project::select('payments.paid_on', 'projects.pm_id', 'projects.client_id', 'clients.name', 'projects.id', 'projects.project_name', 'projects.project_budget', 'project_milestones.id as milestone_id', 'project_milestones.milestone_title', 'project_milestones.cost', 'project_milestones.created_at')
             ->join('users', 'users.id', '=', 'projects.pm_id')
             ->join('users as clients', 'clients.id', '=', 'projects.client_id')
             ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
-            ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+            ->leftJoin('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
             ->where('projects.pm_id', $pmId)
             ->whereBetween('project_milestones.created_at', [$startDate, $assignEndDate])
             ->orWhere(function ($query) use ($startDate, $releaseEndDate, $pmId) {
@@ -764,16 +766,16 @@ class DashboardController extends AccountBaseController
 
 
         //--------------- Project  completion rate  Without QC ---------------- //
-        $query = Project::join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
-            // ->select('projects.id', 'projects.project_budget')
-            ->where('projects.status', '<>', 'finsihed')
-            ->where('projects.pm_id', $pmId)
-            ->where(function ($query) use ($startDate, $releaseEndDate) {
-                $query->where('project_milestones.status', 'complete')
-                    ->where('project_milestones.qc_status', 0);
-            })
+        // $query = Project::join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+        //     // ->select('projects.id', 'projects.project_budget')
+        //     ->where('projects.status', '<>', 'finsihed')
+        //     ->where('projects.pm_id', $pmId)
+        //     ->where(function ($query) use ($startDate, $releaseEndDate) {
+        //         $query->where('project_milestones.status', 'complete')
+        //             ->where('project_milestones.qc_status', 0);
+        //     })
 
-            ->havingRaw('MAX(project_milestones.updated_at) BETWEEN ? AND ?', [$startDate, $releaseEndDate]);
+        //     ->havingRaw('MAX(project_milestones.updated_at) BETWEEN ? AND ?', [$startDate, $releaseEndDate]);
 
 
         $ProjectCompletionWithoutQCCountbyRow = Project::join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
@@ -878,7 +880,7 @@ class DashboardController extends AccountBaseController
 
         //total cancel(cancelled+partially finished) Data View  
         $totalProjectCancelledData = Project::select('clients.name', 'projects.status', 'projects.project_name', 'projects.project_budget', 'projects.start_date', 'projects.updated_at')
-            ->join('users as clients', 'clients.id', '=', 'projects.client_id')
+            ->join('users as clients', 'projects.client_id', '=', 'clients.id')
             ->whereBetween('projects.updated_at', [$startDate, $releaseEndDate])
             ->whereNotBetween('projects.start_date', [$afterAssignStartDate, $releaseEndDate])
             ->Where(function ($q1) {
@@ -940,8 +942,6 @@ class DashboardController extends AccountBaseController
 
             ->count();
 
-
-
         //Cycle delayed complete projects
 
         $completeDelayedProjectsCount = Project::where('status', 'finished')
@@ -960,7 +960,7 @@ class DashboardController extends AccountBaseController
         // $totalRunningAssignProjectsSum 
 
         // Accepted Projects Number and Value
-        $query = Project::join('deals', 'projects.id', '=', 'deals.id')
+        $query = Project::join('deals', 'projects.deal_id', '=', 'deals.id')
             ->whereBetween('projects.start_date', [$startDate, $assignEndDate])
             ->where('deals.status', '=', 'Accepted')
             ->where('projects.pm_id', $pmId);
@@ -976,6 +976,114 @@ class DashboardController extends AccountBaseController
 
         $totalRunningRejectedProjectsRow = $query->count();
         $totalRunningRejectedProjectsSum = $query->sum('amount');
+
+
+
+        //View transaction history by project manager  payment release date in the particular month//
+
+
+        $transaction_amount_dataview = Project::select('payments.paid_on', 'projects.pm_id', 'projects.start_date', 'users.name as manager_name', 'projects.client_id', 'clients.name', 'projects.id', 'projects.project_name', 'projects.project_budget', 'project_milestones.id as milestone_id', 'project_milestones.milestone_title', 'project_milestones.cost', 'project_milestones.created_at')
+            ->join('users',  'users.id', '=', 'projects.pm_id')
+            ->join('users as clients', 'clients.id', '=', 'projects.client_id')
+            ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+            ->leftJoin('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+            ->whereBetween('payments.paid_on', [$startDate, $assignEndDate])
+            ->orderBy('payments.paid_on', 'DESC')
+            ->where('projects.pm_id', $pmId)
+            ->get();
+
+
+        // $released_amount_project = DB::table('projects')
+        //     ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+        //     ->leftJoin('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+        //     ->select('projects.id', DB::raw('SUM(project_milestones.cost) as project_released_value'))
+        //     ->whereNotNull('payments.paid_on')
+        //     ->groupBy('projects.id')
+        //     ->get();
+
+        foreach ($transaction_amount_dataview as $project) {
+            $project_id = $project->id;
+            $payment_date = $project->paid_on;
+
+            $released_amount_project = DB::table('projects')
+                ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+                ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+                ->where('projects.id', $project_id)
+                ->where('payments.paid_on', '<=', $payment_date)
+                ->sum('project_milestones.cost');
+
+            $project->released_amount_project = $released_amount_project;
+        }
+
+
+        $pm_pending_milestone_value = DB::table('projects')
+            ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+            ->leftJoin('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+            ->where('project_milestones.created_at', '<=', $assignEndDate)
+            ->where(function ($q1) use ($assignEndDate) {
+                $q1->whereNull('payments.paid_on')
+                    ->orWhere('payments.paid_on', '>', $assignEndDate);
+            })
+            ->whereNot('project_milestones.status', 'canceled')
+            ->where('projects.pm_id', $pmId)
+            ->sum('project_milestones.cost');
+
+
+
+        $pm_pending_milestone_value_upto_last_month = DB::table('projects')
+            ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+            ->leftJoin('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+            ->where('project_milestones.created_at', '<', $startDate)
+            ->where(function ($q1) use ($startDate) {
+                $q1->whereNull('payments.paid_on')
+                    ->orWhere('payments.paid_on', '>', $startDate);
+            })
+            ->whereNot('project_milestones.status', 'canceled')
+            ->where('projects.pm_id', $pmId)
+            ->sum('project_milestones.cost');
+
+
+
+        $pm_unreleased_amount_month = DB::table('users')    // this is used for finding upto last month pending and this is selected cycle pending amount and that will be minus to whole pending amount
+            ->join('projects', 'users.id', '=', 'projects.pm_id')   //cancel  milestone  is not allowed
+            ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+            ->leftJoin('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+            ->whereBetween('project_milestones.created_at', [$startDate, $assignEndDate])
+            ->where(function ($q1) use ($assignEndDate) {
+                $q1->whereNull('payments.paid_on')
+                    ->orWhere('payments.paid_on', '>', $assignEndDate);
+            })
+            ->whereNot('project_milestones.status', 'canceled')
+            ->where('users.id', $pmId)
+            ->sum('project_milestones.cost');
+
+
+        $pm_released_amount_month = DB::table('users')
+            ->join('projects', 'users.id', '=', 'projects.pm_id')
+            ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+            ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+            //->whereNotNull('project_milestones.invoice_id')
+            ->whereBetween('payments.paid_on', [$startDate, $assignEndDate])
+            ->where('users.id', $pmId)
+            ->sum('project_milestones.cost');
+
+
+
+        $pm_released_amount_this_month_create = DB::table('users')
+            ->join('projects', 'users.id', '=', 'projects.pm_id')
+            ->join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
+            ->join('payments', 'project_milestones.invoice_id', '=', 'payments.invoice_id')
+            //->whereNotNull('project_milestones.invoice_id')
+            ->whereBetween('project_milestones.created_at', [$startDate, $assignEndDate])
+            ->whereBetween('payments.paid_on', [$startDate, $assignEndDate])
+            ->where('users.id', $pmId)
+            ->sum('project_milestones.cost');
+
+
+        // foreach ($unreleased_amount_project as $project) {
+        //     $transaction_amount_dataview->= $project->project_unreleased_value;
+        // }
+
 
 
         //Debugging
@@ -1029,6 +1137,12 @@ class DashboardController extends AccountBaseController
             'startDate',
             'endDate',
             'assignEndDate',
+            'pm_released_amount_this_month_create',
+            'pm_pending_milestone_value',
+            'pm_unreleased_amount_month',
+            'pm_released_amount_month',
+            'pm_pending_milestone_value_upto_last_month',
+            'transaction_amount_dataview',
             'totalRunningAcceptedProjectsRow',
             'totalRunningAcceptedProjectsSum',
             'totalRunningRejectedProjectsRow',
@@ -1170,7 +1284,7 @@ class DashboardController extends AccountBaseController
             //->whereBetween('project_members.created_at', [$startDate, $endDate])
             ->where('projects.pm_id', $pmId)
             ->distinct('projects.id')
-            ->select('projects.id', 'projects.project_name', 'projects.start_date', 'project_members.created_at as min_created_at', 'contract_signs.created_at', 'managers.name as manager_name', 'clients.name as client_name')
+            ->selectRaw('projects.id, projects.project_name, projects.start_date, project_members.created_at as min_created_at,contract_signs.created_at, managers.name as manager_name, clients.name as client_name,(TIMEDIFF(contract_signs.created_at, project_members.created_at)) AS time_difference')
             ->get();
 
         $deliverablePoints = [];
@@ -1199,7 +1313,7 @@ class DashboardController extends AccountBaseController
             ->whereBetween('projects.start_date', [$startDate, $endDate])
             ->where('projects.pm_id', $pmId)
             ->distinct('projects.id')
-            ->select('projects.id', 'projects.project_name', 'p_m_projects.created_at as sales_start_date', 'contract_signs.created_at', 'managers.name as manager_name', 'clients.name as client_name')
+            ->selectRaw('projects.id, projects.project_name,p_m_projects.created_at as sales_start_date,contract_signs.created_at, managers.name as manager_name,clients.name as client_name,(TIMEDIFF(contract_signs.created_at, p_m_projects.created_at)) AS time_difference')
             ->get();
 
         $deliverablePointsAssignedBySales = [];
@@ -1445,6 +1559,110 @@ class DashboardController extends AccountBaseController
             'deliverableProjects',
             'deliverablePoints',
             'totalDeliverablePoints'
+        ));
+    }
+
+    public function developerPointsFilter(Request $request)
+    {
+
+        $devId = $request->input('developerID');
+
+        //$userId = $pmId; // Replace with the actual user ID input
+        // $username = DB::table('users')->where('id', $userId)->value('name');
+
+        $startDate = $request->input('start_date');
+        $endDate1 = $request->input('end_date');
+        $endDate = Carbon::parse($endDate1)->addDays(1)->format('Y-m-d');
+        // $startDate = $request->input('start_date');
+        $startDate1 = Carbon::parse($startDate);
+        // $endDate = $request->input('end_date');
+        $endDate1 = Carbon::parse($endDate1);
+
+        // compare with developer task log time and estimate time given by lead developer
+
+        $developer_estimated_time_compared_log_time = DB::table('tasks')
+            ->join('task_users', 'tasks.id', '=', 'task_users.task_id')
+            ->join('users', function ($join) {
+                $join->on('task_users.user_id', '=', 'users.id');
+                $join->on('tasks.id', '=', 'task_users.task_id');
+            })
+            ->join('project_time_logs', function ($join) {
+                $join->on('users.id', '=', 'project_time_logs.user_id');
+                $join->on('tasks.id', '=', 'project_time_logs.task_id');
+            })
+            ->select('tasks.id', 'tasks.heading as task_name', 'users.name as developer_name', 'tasks.updated_at', 'tasks.estimate_hours', 'tasks.estimate_minutes', DB::raw('SUM(project_time_logs.total_minutes) as task_total_minutes'), DB::raw('(tasks.estimate_hours * 60 + tasks.estimate_minutes) as total_estimated_time_minutes'))
+            ->whereBetween('tasks.updated_at', [$startDate, $endDate])
+            ->where('tasks.board_column_id', '=', '4')
+            ->where('users.id', $devId)
+            ->groupBy('tasks.id')
+            ->get();
+
+        $total_task = 0;
+        $exceed_task = 0;
+        foreach ($developer_estimated_time_compared_log_time as $estimate) {
+            $estimate->percentage_compared_log_time = ($estimate->task_total_minutes / $estimate->total_estimated_time_minutes) * 100;
+            if (($estimate->task_total_minutes / $estimate->total_estimated_time_minutes) * 100 > 120) {
+
+                $exceed_task++;
+                $total_task++;
+            } else {
+
+                $total_task++;
+            }
+        }
+        $bonus_point_estimate_time = 0;
+        if (($exceed_task / $total_task) * 100 <= 5) {
+
+            $bonus_point_estimate_time = 20;
+        }
+
+
+        // compare with developer task log time and estimate time given by lead developer
+
+        $developer_track_time = DB::table('tasks')
+            ->join('task_users', 'tasks.id', '=', 'task_users.task_id')
+            ->join('users', function ($join) {
+                $join->on('task_users.user_id', '=', 'users.id');
+                $join->on('tasks.id', '=', 'task_users.task_id');
+            })
+            ->join('project_time_logs', function ($join) {
+                $join->on('users.id', '=', 'project_time_logs.user_id');
+                $join->on('tasks.id', '=', 'project_time_logs.task_id');
+            })
+            ->select('tasks.id', 'tasks.heading as task_name', 'users.name as developer_name', 'tasks.updated_at', DB::raw('SUM(project_time_logs.total_minutes) as task_total_minutes'), DB::raw('SUM(project_time_logs.total_minutes)/60 as task_total_hours'))
+            ->whereBetween('tasks.updated_at', [$startDate, $endDate])
+            ->where('tasks.board_column_id', '=', '4')
+            ->where('users.id', $devId)
+            ->groupBy('tasks.id')
+            ->get();
+
+
+        $total_developer_track_time = 0;
+        foreach ($developer_track_time as $track_time) {
+            $total_developer_track_time += $track_time->task_total_minutes;
+        }
+        $total_developer_track_time = $total_developer_track_time / 60;
+        if ($total_developer_track_time >= 180) {
+
+            $bonus_point_track_time = 25;
+        } else if ($total_developer_track_time >= 165) {
+
+            $bonus_point_track_time = 15;
+        } else
+            $bonus_point_track_time = 0;
+
+
+
+
+        return view('dashboard.employee.pm_dashboard', compact(
+            'bonus_point_track_time',
+            'total_developer_track_time',
+            'developer_track_time',
+            'bonus_point_estimate_time',
+            'developer_estimated_time_compared_log_time',
+            'startDate1',
+            'endDate1'
+
         ));
     }
 }

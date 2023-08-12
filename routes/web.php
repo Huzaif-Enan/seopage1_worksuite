@@ -321,11 +321,13 @@ Route::group(['middleware' => 'auth', 'prefix' => 'account'], function () {
     Route::post('attendances/store-clock-in', [DashboardController::class, 'storeClockIn'])->name('attendances.store_clock_in');
     Route::get('attendances/update-clock-in', [DashboardController::class, 'updateClockIn'])->name('attendances.update_clock_in');
     Route::get('dashboard/private_calendar', [DashboardController::class, 'privateCalendar'])->name('dashboard.private_calendar');
+
     // Route::resource('points/', PointsController::class)->only // enan 
     Route::post('dashboard/filter', [DashboardController::class, 'filter'])->name('dashboard.filter');
     Route::post('dashboard/delayRequestForm', [DashboardController::class, 'delayRequestForm'])->name('dashboard.delayRequestForm');
     Route::post('dashboard/projectExtendApproval', [DashboardController::class, 'projectExtendApproval'])->name('dashboard.projectExtendApproval');
     Route::post('dashboard/pm-points-filter', [DashboardController::class, 'pmPointsFilter'])->name('dashboard.pmPointsFilter');
+    Route::post('dashboard/developer-points-filter', [DashboardController::class, 'developerPointsFilter'])->name('dashboard.developerPointsFilter');
 
     //End of MY ROUTE
 

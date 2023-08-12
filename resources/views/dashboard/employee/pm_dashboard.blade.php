@@ -2842,20 +2842,15 @@
             <h3>Total Rejected Projects value</h3>
             <p>{{ number_format($totalRunningRejectedProjectsSum,2)}}</p>
 
-            <h3>Released amount for Cycle</h3>
+            <h3>Released amount for Current Cycle</h3>
             <p>{{ $RunningtotalAssignMilestonesCost}}</p>
 
             <h3>Total released amount</h3>
             <p>{{ $totalAssignMilestonesCost}}</p>
 
+            <h3>Total Cancelled Projects</h3>
+            <p>{{ $totalProjectCancelled}}</p>
 
-            <h3>Project Completion Rate</h3>
-            <p>{{ $totalAssignProjectsSum }} Dollar assigned </p>
-            <p>{{ $totalCompleteProjectsSum }} Dollar completed </p>
-            <p>Percentage: {{ number_format($ProjectCompletionRatebyCost, 2) }}% </p>
-            <p>{{ $totalAssignProjectsRow }} Projects assigned </p>
-            <p>{{ $totalCompleteProjectsRow }} Projects completed </p>
-            <p>Percentage: {{ number_format($projectsCompletionRatebyRow, 2) }}% </p>
 
             <h3>Average Project Completion Time</h3>
             <p>{{ number_format($averageProjectCompletionTime,2) }} Days</p>
@@ -2878,14 +2873,32 @@
 
 
             <h3>Task Completion Rate</h3>
+            {{-- <h3>Complete tasks for cycle (number)</h3> --}}
             <p>{{ $totalAssignTasksRow }} Tasks assigned </p>
             <p>{{ $totalCompleteTasksRow }} Tasks completed </p>
             <p>Percentage: {{ number_format($taskCompletionRate, 2) }}% </p>
 
             <h3>Task Completion Rate (Running)</h3>
+            {{-- <h3>Complete tasks for Running cycle (number)</h3> --}}
             <p>{{ $RunningtotalAssignTasksRow }} Tasks assigned </p>
             <p>{{ $RunningtotalCompleteTasksRow }} Tasks completed </p>
             <p>Percentage: {{ number_format($RunningtaskCompletionRate, 2) }}% </p>
+
+            <h3>Project Completion Rate</h3>
+            <p>{{ $totalAssignProjectsSum }} Dollar assigned </p>
+            <p>{{ $totalCompleteProjectsSum }} Dollar completed </p>
+            <p>Percentage: {{ number_format($ProjectCompletionRatebyCost, 2) }}% </p>
+            <p>{{ $totalAssignProjectsRow }} Projects assigned </p>
+            <p>{{ $totalCompleteProjectsRow }} Projects completed </p>
+            <p>Percentage: {{ number_format($projectsCompletionRatebyRow, 2) }}% </p>
+
+            <h3>Project Completion Rate(Running Batch)</h3>
+            <p>{{ $totalRunningAssignProjectsSum }} Dollar assigned </p>
+            <p>{{ $totalRunningCompleteProjectsSum }} Dollar completed </p>
+            <p>Percentage: {{ number_format($RunningProjectCompletionRatebyCost, 2) }}% </p>
+            <p>{{ $totalRunningAssignProjectsRow }} Projects assigned </p>
+            <p>{{ $totalRunningCompleteProjectsRow }} Projects completed </p>
+            <p>Percentage: {{ number_format($RunningProjectsCompletionRatebyRow, 2) }}% </p>
 
             <h3>Project Completion Rate(Without QC and Completion Form)</h3>
             <p>{{ $totalAssignProjectsSum }} Dollar assigned </p>
@@ -2897,17 +2910,70 @@
             <p>Percentage: {{ number_format($projectsCompletionRatebyRowWithoutQC, 2) }}% </p>
 
 
-            <h3>Project Completion Rate(Running Batch)</h3>
-            <p>{{ $totalRunningAssignProjectsSum }} Dollar assigned </p>
-            <p>{{ $totalRunningCompleteProjectsSum }} Dollar completed </p>
-            <p>Percentage: {{ number_format($RunningProjectCompletionRatebyCost, 2) }}% </p>
-            <p>{{ $totalRunningAssignProjectsRow }} Projects assigned </p>
-            <p>{{ $totalRunningCompleteProjectsRow }} Projects completed </p>
-            <p>Percentage: {{ number_format($RunningProjectsCompletionRatebyRow, 2) }}% </p>
-
             @endif
+            {{----------------------- Project manager transaction data about payment release ------------------------------}}
+            <div>
+                <h3> Project Manager Transaction </h3>
+                @if (isset($pm_pending_milestone_value_upto_last_month))
+                <h5>Pending Amount(upto last month): {{ number_format($pm_pending_milestone_value_upto_last_month, 2) }} Dollar</h5>
+                <h5>Total Released Amount(this Cycle): {{ $pm_released_amount_month }} Dollar </h5>
+                <h5>Total Assigned Amount(For this Cycle): {{ $RunningtotalAssignMilestonesCost }} Dollar </h5>
+                <h5>Total release amount (For this cycles projects): {{$pm_released_amount_this_month_create }} Dollar </h5>
+                <h5>Total Unreleased Amount(For this Cycle): {{$pm_unreleased_amount_month}} Dollar </h5>
+                <h5>Total unrelease amount (Overall): {{ $pm_pending_milestone_value }} Dollar </h5><br>
+                @endif
+                <h3> Project Manager Transaction Data </h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>SL NO</th>
+                            <th>Payment Release </th>
+                            <th>Project Manager Name</th>
+                            <th>Client Name</th>
+                            {{-- <th>Milestone ID</th> --}}
+                            <th>Project Name</th>
+                            <th>Project Start Date</th>
+                            <th>Project Budget</th>
+                            <th>Unreleased Amount for Project</th>
+                            <th>Milestone Name</th>
+                            {{-- <th>Project ID</th> --}}
+                            <th>Released Amount</th>
+                            <th>Total Release Amount</th>
 
 
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                        if(isset($transaction_amount_dataview))
+                        $dicrease = $pm_released_amount_month;
+                        @endphp
+                        @if(isset($transaction_amount_dataview))
+                        @foreach ($transaction_amount_dataview as $key => $row)
+                        <tr>
+                            <td>{{$key+1}}</td>
+                            <td>{{ $row->paid_on }}</td>
+                            <td>{{ $row->manager_name }}</td>
+                            <td>{{ $row->name }}</td>
+                            <td>{{ $row->project_name }}</td>
+                            <td>{{ $row->start_date->format('Y-m-d') }}</td>
+                            <td>{{ $row->project_budget }}</td>
+                            <td>{{round($row->project_budget- $row->released_amount_project,2) }}</td>
+                            {{-- <td>{{ $row->milestone_id }}</td> --}}
+                            <td>{{ $row->milestone_title }}</td>
+                            {{-- <td>{{ $row->id }}</td> --}}
+                            <td>{{ $row->cost }}</td>
+                            <td>{{ $dicrease}}</td>
+                            <?php $dicrease = $dicrease - $row->cost; ?>
+
+                        </tr>
+                        @endforeach
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+            {{-------------------------END of Project Manager transaction data about payment release --------------------------------------}}
+            <h3> Milestone History </h3>
             <table class="table">
                 <thead>
                     <tr>
@@ -2915,13 +2981,14 @@
                         <th>Project Manager ID</th>
                         <th>Client ID</th>
                         <th>Client Name</th>
+                        <th>Milestone ID</th>
+                        <th>Milestone Title</th>
                         <th>Project ID</th>
                         <th>Project Name</th>
                         <th>Project Budget</th>
-                        <th>Milestone ID</th>
-                        <th>Milestone Title</th>
                         <th>Milestone Cost</th>
                         <th>Milestone Start</th>
+                        <th>Milestone Complete</th>
 
                     </tr>
                 </thead>
@@ -2933,14 +3000,14 @@
                         <td>{{ $row->pm_id }}</td>
                         <td>{{ $row->client_id }}</td>
                         <td>{{ $row->name }}</td>
+                        <td>{{ $row->milestone_id }}</td>
+                        <td>{{ $row->milestone_title }}</td>
                         <td>{{ $row->id }}</td>
                         <td>{{ $row->project_name }}</td>
                         <td>{{ $row->project_budget }}</td>
-                        <td>{{ $row->milestone_id }}</td>
-                        <td>{{ $row->milestone_title }}</td>
                         <td>{{ $row->cost }}</td>
                         <td>{{ $row->created_at }}</td>
-
+                        <td>{{ $row->paid_on }}</td>
                     </tr>
                     @endforeach
                     @endif
@@ -3458,6 +3525,7 @@
                 <th>Points Earned</th>
                 <th>Start Date</th>
                 <th>Signing Date</th>
+                <th>Time Difference</th>
 
             </tr>
 
@@ -3474,6 +3542,7 @@
                 {{-- <td>{{ $row->start_date }}</td> --}}
                 <td>{{ $row->min_created_at }}</td>
                 <td>{{ $row->created_at }}</td>
+                <td>{{ $row->time_difference }}</td>
             </tr>
             @endforeach
             @endif
@@ -3500,6 +3569,7 @@
                 <th>Points Earned</th>
                 <th>Form Fillup Date</th>
                 <th>Signing Date</th>
+                <th>Time Difference</th>
 
             </tr>
 
@@ -3515,6 +3585,7 @@
                 <td>{{ $deliverablePointsAssignedBySales[$row->id] }}</td>
                 <td>{{ $row->sales_start_date }}</td>
                 <td>{{ $row->created_at }}</td>
+                <td>{{ $row->time_difference }}</td>
             </tr>
             @endforeach
             @endif
@@ -3527,12 +3598,140 @@
 </div>
 {{----------- -------------------------------END of Deliverable Points Data------------------------------------------}}
 
-
-
-
-
 <div>
+    @php
+    $users= App\Models\User::where('role_id',5)->get();
+    @endphp
+    <div class="form-group">
+        <form action="{{ route('dashboard.developerPointsFilter') }}"
+              method="POST">
+            {{ csrf_field() }}
+            <label for="projectmanager">NAME:</label>
+            <select name="developerID"
+                    id="dropdown1"
+                    required>
+                @foreach($users as $user)
+                <option value="{{$user->id}}">{{$user->name}}</option>
+                {{-- <option value="213">Md. Rakib Hossain</option>
+                <option value="214">Md. Mahfuz Khan</option>
+                <option value="215">Hillol Das Gupta</option>
+                <option value="223">Mehedi Hasan Polash</option>
+                <option value="245">Mohammad Fazle Rabbi</option>
+                <option value="224">Md. Shakib Ahmed</option>
+                <option value="225">Mohammad Farhad</option>
+                <option value="226">Md. Rasedul Islam</option>
+                <option value="2062">Mainul Hoque Rakib</option>
+                <option value="2063">Md. Saddam Hossain (Sh Arif)</option> --}}
+                @endforeach
+            </select>
+            <label for="start_date">Start Date:</label>
+            <input type="date"
+                   name="start_date"
+                   id="start_date"
+                   required>
 
+            <label for="end_date">End Date:</label>
+            <input type="date"
+                   name="end_date"
+                   id="end_date"
+                   required>
+
+            <button type="submit"
+                    class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+
+    <div>@if(isset($developer_estimated_time_compared_log_time))
+        <h4 style="color: rgba(16, 47, 200, 0.777)">Date:{{ $startDate1->format('Y-m-d') }} to {{ $endDate1->format('Y-m-d') }} </h4>
+        @endif
+    </div>
+    {{-------------------------------Developer Log Time Compared with estimated Time--------------------------------------------}}
+    <div>
+
+        <h3>Developer Log Time Compared with estimated Time </h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>SL NO</th>
+                    <th>Developer Name</th>
+                    <th>Task ID</th>
+                    <th>Task Name</th>
+                    <th>Total Estimated Time (minutes)</th>
+                    <th>Total Log Time (minutes)</th>
+                    <th>Percentage</th>
+                    <th>Complete Date</th>
+
+
+                </tr>
+
+            </thead>
+            <tbody> @if(isset($developer_estimated_time_compared_log_time))
+                @foreach ($developer_estimated_time_compared_log_time as $key => $row)
+                <tr>
+                    <td>{{$key+1}}</td>
+                    <td>{{ $row->developer_name }}</td>
+                    <td>{{ $row->id }}</td>
+                    <td>{{ $row->task_name }}</td>
+                    <td>{{ $row->total_estimated_time_minutes }}</td>
+                    <td>{{ $row->task_total_minutes }}</td>
+                    <td>{{ round($row->percentage_compared_log_time,2) }}%</td>
+                    <td>{{ $row->updated_at }}</td>
+                </tr>
+                @endforeach
+                @endif
+            </tbody>
+        </table>
+        @if(isset($bonus_point_estimate_time))
+        <h4> Earned Bonus Points( not more than 5% of the cases): {{$bonus_point_estimate_time}} points</h4>
+        @endif
+
+    </div>
+
+    {{------------------------------- END of Developer Log Time Compared with estimated Time-------------------------------------------}}
+
+
+    {{-------------------------------Developer Track time for bonus points-------------------------------------------}}
+    <div>
+
+        <h3>Developer Track Time (above 165 & 180 hours)</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>SL NO</th>
+                    <th>Developer Name</th>
+                    <th>Task ID</th>
+                    <th>Task Name</th>
+                    <th>Total Track Time (minutes)</th>
+                    <th>Total Track Time (hours)</th>
+                    <th>Complete Date</th>
+
+
+                </tr>
+
+            </thead>
+            <tbody> @if(isset($developer_track_time))
+                @foreach ($developer_track_time as $key => $row)
+                <tr>
+                    <td>{{$key+1}}</td>
+                    <td>{{ $row->developer_name }}</td>
+                    <td>{{ $row->id }}</td>
+                    <td>{{ $row->task_name }}</td>
+                    <td>{{ $row->task_total_minutes }}</td>
+                    <td>{{round( $row->task_total_hours,2) }}</td>
+                    <td>{{ $row->updated_at }}</td>
+                </tr>
+                @endforeach
+                @endif
+            </tbody>
+        </table>
+        @if(isset($bonus_point_track_time))
+        <h4> Total Track Time (hours): {{round($total_developer_track_time,2)}} hours</h4>
+        <h4> Earned Bonus Points( above 165 & 180 hours): {{$bonus_point_track_time}} points</h4>
+        @endif
+
+    </div>
+
+    {{-------------------------------END of Developer Track time for bonus points--------------------------------------------}}
 
 
     <!-- Optional JavaScript -->
