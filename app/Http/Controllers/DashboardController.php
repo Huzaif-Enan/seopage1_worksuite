@@ -737,7 +737,7 @@ class DashboardController extends AccountBaseController
         $totalAssignProjectsRow += $beforeAssignProjectsRow;
         $totalAssignProjectsSum += $beforeAssignProjectsSum;
 
-        //Percentage of projects 
+        //Percentage of projects -
         $projectsCompletionRatebyRow = 0;
         $ProjectCompletionRatebyCost = 0;
 
@@ -766,6 +766,7 @@ class DashboardController extends AccountBaseController
 
 
         //--------------- Project  completion rate  Without QC ---------------- //
+
         // $query = Project::join('project_milestones', 'projects.id', '=', 'project_milestones.project_id')
         //     // ->select('projects.id', 'projects.project_budget')
         //     ->where('projects.status', '<>', 'finsihed')
